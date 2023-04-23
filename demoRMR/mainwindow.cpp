@@ -272,6 +272,33 @@ void MainWindow::robotMovement(TKobukiData robotdata){
 
     cout << "-------------------- ROBOT MOVEMENT\n" << endl;
     calculateXY(robotdata);
+
+    if(isOnLine() && isLineTracking == false){
+
+        Point center = findLastValidPoint(map, {(int)x,(int)y}, {(int)x_final,(int)y_final});
+
+        cout << " center x: " << center.x << " y: " << center.y << " x: " << x_destination << " y: " << y_destination << endl;
+        if(center.x >= x - 5 && center.x <= x + 5 &&
+                center.y >= y - 5 && center.y <= y + 5){
+            cout << "pointReached LIDAR_270: " << lidar_270 << endl;
+            Point point = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
+            x_destination = point.x;
+            y_destination = point.y;
+            cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
+            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
+            distance = getDistanceToEnd();
+            isLineTracking = true;
+        }
+        else{
+            cout << "(" << x << ", " << y << ") lies on the line." << endl;
+            x_destination = center.x;
+            y_destination = center.y;
+            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
+            isLineTracking = true;
+        }
+
+    }
+
     double correctRotation = getRightOrientation();
     double distanceToEnd = getDistanceToEnd();
 
@@ -325,9 +352,18 @@ void MainWindow::robotMovement(TKobukiData robotdata){
                 cout << "zastavujem pohyb" << endl;
                 stopRobot();
 
-//                pointReached++;
+
                 if(!manualNavigation){
                     if(pointReached < 2){
+                        if((x_final >= x - 2.5) && (x_final <= x + 2.5) &&
+                                (y_final >= y - 2.5) && (y_final <= y + 2.5)){
+                            isStop = true;
+                            starMovement = false;
+                        }
+                        else{
+
+                        }
+                        isLineTracking = false;
                         cout << "pointReached LIDAR_270: " << lidar_270 << endl;
                         Point point = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
                         x_destination = point.x;
@@ -430,8 +466,19 @@ void MainWindow::calculateXY(TKobukiData robotdata){
 
 }
 
+bool MainWindow::isOnLine(){
 
-void MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point pointEnd) {
+    //priamka medzi bodmi
+    slope = (y_final - 0) / (x_final - 0);
+    y_intercept = 0 - slope * 0;
+
+    double y_test = slope * x + y_intercept;
+
+    cout << "hodnota testu je: " << abs(y_test - y) << endl;
+    return abs(y_test - y) < 2;
+}
+
+Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point pointEnd) {
     int grid_size = 5; // Grid size in pixels
     int grid_offset = 60; // Grid offset in pixels
     int wall_distance = 8; // Wall distance in cm/5. So 50cm/5 = 10
@@ -466,10 +513,10 @@ void MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point p
 
             // If it is a wall, return the point at the specified distance from the wall
             double angle = atan2(pointEnd.y - pointStart.y, pointEnd.x - pointStart.x);
-            x_destination = (x - cos(angle) * wall_distance) * grid_size - grid_offset * grid_size;
-            y_destination = (y - sin(angle) * wall_distance) * grid_size - grid_offset * grid_size;
-            cout << "Pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
-            break;
+            x = (x - cos(angle) * wall_distance) * grid_size - grid_offset * grid_size;
+            y = (y - sin(angle) * wall_distance) * grid_size - grid_offset * grid_size;
+            cout << "Pozicia na ktoru idem je x: " << x << " y: " << y << endl;
+            return Point{x, y};
         }
 
 
@@ -477,12 +524,12 @@ void MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point p
         if (Point{x, y} == pointEnd) {
             // If it is the destination point, return it as the last valid point
             Point finalPoint = pointEnd;
-            x_destination = (finalPoint.x - grid_offset) * grid_size;
-            y_destination = (finalPoint.y - grid_offset) * grid_size;
+            x = (finalPoint.x - grid_offset) * grid_size;
+            y = (finalPoint.y - grid_offset) * grid_size;
 
             cout << "pointEnd" << endl;
             cout << "Pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
-            break;
+            return Point{x, y};
         }
 
         // Update the error and move to the next cell
@@ -511,13 +558,14 @@ Point MainWindow::walkAlongWall(int map[240][240], Point point, int yDirection, 
     while (true) {
 //        cout << "x: " << x << " y: " << y << endl;
         if (map[y + yDirection][x + xDirection] == 0 && map[y + yControl][x + xControl] != 0) {
-            cout << "x: " << x << " y: " << y << endl;
+//            cout << "x: " << x << " y: " << y << endl;
 //            cout << "map[y + yDirection][x + xDirection]: " << map[y + yDirection][x + xDirection] << " map[y + yControl][x + xControl]: " << map[y + yControl][x + xControl] << endl;
             y += yDirection;
             x += xDirection;
         }
         else if(map[y + yDirection][x + xDirection] == 0 && map[y + yControl][x + xControl] == 0){
             cout << "Potiahnutie" << endl;
+            cout << "xControl: " << xControl << " yControl: " << yControl << endl;
             cout << "x: " << x << " y: " << y << endl;
 //            cout << "map[y + yDirection][x + xDirection]: " << map[y + yDirection][x + xDirection] << " map[y + yControl][x + xControl]: " << map[y + yControl][x + xControl] << endl;
             y += yDirection;
@@ -608,8 +656,102 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
 
     Point newPoint = Point{x,y};
 
-    int offset = 20;
-    if(lidar_270 >= 120 && lidar_270 <= 300){
+
+
+
+    for (auto direction : {Direction::RIGHT, Direction::LEFT}) {
+        switch (direction) {
+            case Direction::LEFT: {
+                // LEFT and UP
+                cout << "LEFT" << endl;
+//                if(lastDirection == Direction::LEFT){
+//                    break;
+//                }
+                sx = 1;
+                while(x - sx >= 0){
+                     if (map[y][x - sx] != 0){
+                        break;
+                     }
+                     sx++;
+                }
+                cout << "sx: " << sx <<endl;
+                if(sx <= 12){
+                    break;
+                }
+
+                sy= 1;
+                while(y + sy <= 240){
+                    if (map[y][x - 1] == 0 && map[y + sy][x - 1] != 0) {
+                        cout << "Nova pozicia na ktoru idem je Direction::LEFT " << endl;
+                        cout << "x: " << x << " y: " << y << endl;
+                        newPoint = walkAlongWall(map, point, 0, -1, sy, -1, wall_distance, 0);
+                        isBreak = true;
+                        lastDirection = Direction::LEFT;
+                        break;
+                    }
+                    sy++;
+
+                    if(sy == 12){
+                        break;
+                    }
+                }
+                cout << "sy: " << sy <<endl;
+                break;
+            }
+            case Direction::RIGHT: {
+                // RIGHT and DOWN
+                cout << "RIGHT" << endl;
+//                if(lastDirection == Direction::RIGHT){
+//                    break;
+//                }
+
+                sx = 1;
+                while(x + sx <= 240){
+                     if (map[y][x + sx] != 0){
+                        break;
+                     }
+                     sx++;
+                }
+                cout << "sx: " << sx <<endl;
+                if(sx <= 12){
+                    break;
+                }
+
+                sy= 1;
+                while(y - sy >= 0){
+                    if (map[y][x + 1] == 0 && map[y - sy][x + 1] != 0) {
+                        double y_test = slope * x + y_intercept;
+
+                        if (abs(y_test - y) < 1e-9) {
+                            cout << "(" << x << ", " << y << ") lies on the line." << endl;
+                        }
+                        cout << "Nova pozicia na ktoru idem je Direction::RIGHT " << endl;
+                        cout << "x: " << x << " y: " << y << endl;
+                        newPoint = walkAlongWall(map, point, 0, 1, -sy, 1, -wall_distance, 0);
+                        isBreak = true;
+                        lastDirection = Direction::RIGHT;
+                        break;
+                    }
+                    sy += 1;
+
+                    //neprehladavam priestor dalej ako 50cm
+                    if(sy == 12){
+                        break;
+                    }
+                }
+                cout << "sy: " << sy <<endl;
+                break;
+            }     
+        }
+        if(isBreak == true){
+            newPoint.x = (newPoint.x - grid_offset) * grid_size;
+            newPoint.y = (newPoint.y - grid_offset) * grid_size;
+            return newPoint;
+        }
+    }
+
+    int offset = 18;
+    if(lidar_270 >= 85 && lidar_270 <= 300 && newPoint.x == x && newPoint.y == y){
         cout << "pointOfChange LIDAR_270: " << lidar_270 << endl;
         switch (lastDirection) {
             case Direction::UP: {
@@ -642,8 +784,7 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
         return newPoint;
     }
 
-
-    for (auto direction : {Direction::RIGHT, Direction::LEFT, Direction::DOWN, Direction::UP,}) {
+    for (auto direction : {Direction::DOWN, Direction::UP,}) {
         switch (direction) {
             case Direction::UP: {
                 // UP and RIGHT
@@ -722,85 +863,11 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
                 cout << "sx: " << sx <<endl;
                 break;
             }
-            case Direction::LEFT: {
-                // LEFT and UP
-                cout << "LEFT" << endl;
-//                if(lastDirection == Direction::LEFT){
-//                    break;
-//                }
-                sx = 1;
-                while(x - sx >= 0){
-                     if (map[y][x - sx] != 0){
-                        break;
-                     }
-                     sx++;
-                }
-                cout << "sx: " << sx <<endl;
-                if(sx <= 12){
-                    break;
-                }
-
-                sy= 1;
-                while(y + sy <= 240){
-                    if (map[y][x - 1] == 0 && map[y + sy][x - 1] != 0) {
-                        cout << "Nova pozicia na ktoru idem je Direction::LEFT " << endl;
-                        cout << "x: " << x << " y: " << y << endl;
-                        newPoint = walkAlongWall(map, point, 0, -1, sy, -1, wall_distance, 0);
-                        isBreak = true;
-                        lastDirection = Direction::LEFT;
-                        break;
-                    }
-                    sy++;
-
-                    if(sy == 12){
-                        break;
-                    }
-                }
-                cout << "sy: " << sy <<endl;
-                break;
-            }
-            case Direction::RIGHT: {
-                // RIGHT and DOWN
-                cout << "RIGHT" << endl;
-//                if(lastDirection == Direction::RIGHT){
-//                    break;
-//                }
-
-                sx = 1;
-                while(x + sx <= 240){
-                     if (map[y][x + sx] != 0){
-                        break;
-                     }
-                     sx++;
-                }
-                cout << "sx: " << sx <<endl;
-                if(sx <= 12){
-                    break;
-                }
-
-                sy= 1;
-                while(y - sy >= 0){
-                    if (map[y][x + 1] == 0 && map[y - sy][x + 1] != 0) {
-                        cout << "Nova pozicia na ktoru idem je Direction::RIGHT " << endl;
-                        cout << "x: " << x << " y: " << y << endl;
-                        newPoint = walkAlongWall(map, point, 0, 1, -sy, 1, -wall_distance, 0);
-                        isBreak = true;
-                        lastDirection = Direction::RIGHT;
-                        break;
-                    }
-                    sy += 1;
-
-                    //neprehladavam priestor dalej ako 50cm
-                    if(sy == 12){
-                        break;
-                    }
-                }
-                cout << "sy: " << sy <<endl;
-                break;
-            }     
         }
         if(isBreak == true){
-            break;
+            newPoint.x = (newPoint.x - grid_offset) * grid_size;
+            newPoint.y = (newPoint.y - grid_offset) * grid_size;
+            return newPoint;
         }
     }
 
@@ -808,25 +875,25 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
     if(newPoint.x == x && newPoint.y == y){
         switch (lastDirection) {
             case Direction::UP: {
-                cout << "Nova pozicia na ktoru idem je Direction::UP FAKE" << endl;
+                cout << "Nova pozicia na ktoru idem je Direction::RIGHT FAKE" << endl;
                 newPoint.x += move;
                 lastDirection = Direction::RIGHT;
                 break;
             }
             case Direction::DOWN: {
-                cout << "Nova pozicia na ktoru idem je Direction::DOWN FAKE" << endl;
+                cout << "Nova pozicia na ktoru idem je Direction::LEFT FAKE" << endl;
                 newPoint.x -= move;
                 lastDirection = Direction::LEFT;
                 break;
             }
             case Direction::RIGHT: {
-                cout << "Nova pozicia na ktoru idem je Direction::RIGHT FAKE" << endl;
+                cout << "Nova pozicia na ktoru idem je Direction::DOWN FAKE" << endl;
                 newPoint.y -= move;
                 lastDirection = Direction::DOWN;
                 break;
             }
             case Direction::LEFT: {
-                cout << "Nova pozicia na ktoru idem je Direction::LEFT FAKE" << endl;
+                cout << "Nova pozicia na ktoru idem je Direction::UP FAKE" << endl;
                 newPoint.y += move;
                 lastDirection = Direction::UP;
                 break;
@@ -908,6 +975,8 @@ void MainWindow::initData(TKobukiData robotdata){
 
     x_destination = xArray[pointReached];
     y_destination = yArray[pointReached];
+    x_final = 420;
+    y_final = 180;
     distance = getDistanceToEnd();
     deadbandRotation = 0.02;
 
@@ -944,12 +1013,11 @@ void MainWindow::initData(TKobukiData robotdata){
 
     starMovement = false;
     manualNavigation = false;
-    isWallTracking = false;
+    isLineTracking = false;
 
     angle_lidar = 0;
     min_dist_lidar = 0;
-    slope = (y_destination - 0) / (x_destination - 0);
-    y_intercept = 0 - slope * 0;
+
 
     init = false;
 }
@@ -1036,7 +1104,14 @@ void MainWindow::on_pushButton_10_clicked()//start automatic
         starMovement = true;
     }
     else{
-        findLastValidPoint(map, {0,0}, {xArray[1],yArray[1]});
+        Point center = findLastValidPoint(map, {0,0}, {(int)x_final,(int)y_final});
+        x_destination = center.x;
+        y_destination = center.y;
+
+        //priamka medzi bodmi
+        slope = (y_destination - 0) / (x_destination - 0);
+        y_intercept = 0 - slope * 0;
+
         starMovement = true;
         manualNavigation = false;
     }
@@ -1093,8 +1168,8 @@ void MainWindow::on_pushButton_12_clicked() //SEND ROBOT
     pointReached = 0;
     QString x = ui->lineEdit_6->text();
     QString y = ui->lineEdit_5->text();
-    x_destination = x.toInt();
-    y_destination = y.toInt();
+    x_final = x.toInt();
+    y_final = y.toInt();
     isStop = false;
     starMovement = true;
     manualNavigation = true;

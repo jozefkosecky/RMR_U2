@@ -105,9 +105,10 @@ private slots:
 
     void updateMap();
 
-    void findLastValidPoint(int map[240][240], Point pointStart, Point pointEnd);
+    Point findLastValidPoint(int map[240][240], Point pointStart, Point pointEnd);
     Point pointOfChange(int map[240][240], Point point);
     Point walkAlongWall(int map[240][240], Point point, int yDirection, int xDirection, int yControl, int xControl, int x_substraction, int y_substraction);
+    bool isOnLine();
 
 private:
 
@@ -182,7 +183,7 @@ private:
     double angle_lidar;
     double min_dist_lidar;
 
-    bool isWallTracking;
+    bool isLineTracking;
 
     double slope;
     double y_intercept;
@@ -190,6 +191,9 @@ private:
 
     bool isWallClose;
     bool isMovementBasedOnLidar;
+
+    double x_final;
+    double y_final;
 
 
 public slots:
