@@ -100,6 +100,8 @@ void MainWindow::updateMap(){
     int x_wall = 0;
     int y_wall = 0;
     int numberFromMap = 0;
+    double minDist = 300;
+    double angle = 0;
 
 //    copyOfLaserData.numberOfScans
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
@@ -109,11 +111,15 @@ void MainWindow::updateMap(){
         }*/
 
         dist=copyOfLaserData.Data[k].scanDistance/10;
-
+        angle = 360-copyOfLaserData.Data[k].scanAngle;
         if(dist <= 15 || dist > 300 || (dist >= 64 && dist <= 70)){
             continue;
         }
 
+        if(angle <= 90 && dist < minDist && min_dist_lidar == 300){
+            minDist = dist;
+            min_dist_lidar = dist;
+        }
         switch(k) {
             case 203:
                 lidar_270 = dist;
@@ -278,6 +284,17 @@ void MainWindow::robotMovement(TKobukiData robotdata){
         Point center = findLastValidPoint(map, {(int)x,(int)y}, {(int)x_final,(int)y_final});
 
         cout << " center x: " << center.x << " y: " << center.y << " x: " << x_destination << " y: " << y_destination << endl;
+
+//        if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
+//                center.y >= y_final - 5 && center.y <= y_final + 5){
+//            cout << "(" << x << ", " << y << ") lies on the line." << endl;
+//            x_destination = center.x;
+//            y_destination = center.y;
+//            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
+//            isLineTracking = true;
+//        }
+
+
         if(center.x >= x - 5 && center.x <= x + 5 &&
                 center.y >= y - 5 && center.y <= y + 5){
             cout << "pointReached LIDAR_270: " << lidar_270 << endl;
@@ -289,7 +306,8 @@ void MainWindow::robotMovement(TKobukiData robotdata){
             distance = getDistanceToEnd();
             isLineTracking = true;
         }
-        else{
+        else if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
+                center.y >= y_final - 5 && center.y <= y_final + 5){
             cout << "(" << x << ", " << y << ") lies on the line." << endl;
             x_destination = center.x;
             y_destination = center.y;
@@ -355,22 +373,39 @@ void MainWindow::robotMovement(TKobukiData robotdata){
 
                 if(!manualNavigation){
                     if(pointReached < 2){
+                        isLineTracking = false;
+                        cout << "pointReached min_dist_lidar: " << min_dist_lidar << endl;
+                        cout << "pointReached LIDAR_270: " << lidar_270 << endl;
                         if((x_final >= x - 2.5) && (x_final <= x + 2.5) &&
                                 (y_final >= y - 2.5) && (y_final <= y + 2.5)){
                             isStop = true;
                             starMovement = false;
                         }
-                        else{
 
-                        }
-                        isLineTracking = false;
-                        cout << "pointReached LIDAR_270: " << lidar_270 << endl;
+                        // ak je vzdialenost steny od robota v rozmedzi 0-90 mensia ako 40 tak ho posuniem v x osi dozadu
+//                        if(min_dist_lidar < 40) {
+//                            x_destination -= 15;
+//                            distance = getDistanceToEnd();
+//                            min_dist_lidar = 300;
+//                            cout << "mindist Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
+//                        }
+//                        else{
+//                            Point point = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
+//                            x_destination = point.x;
+//                            y_destination = point.y;
+//                            cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
+//                            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
+//                            distance = getDistanceToEnd();
+//                        }
+
                         Point point = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
                         x_destination = point.x;
                         y_destination = point.y;
                         cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
                         cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
                         distance = getDistanceToEnd();
+
+
                     }
                     else{
                        isStop = true;
@@ -949,34 +984,36 @@ void MainWindow::initData(TKobukiData robotdata){
 //    yArray[4] = 350;
 
     //Prehladavanie mapy
-    xArray[0] = 0;
-    xArray[1] = 300;
-    xArray[2] = 110;
-    xArray[3] = 270;
-    xArray[4] = 270;
-    xArray[5] = 400;
-    xArray[6] = 270;
-    xArray[7] = 270;
-    xArray[8] = 475;
-    xArray[9] = 475;
+//    xArray[0] = 0;
+//    xArray[1] = 300;
+//    xArray[2] = 110;
+//    xArray[3] = 270;
+//    xArray[4] = 270;
+//    xArray[5] = 400;
+//    xArray[6] = 270;
+//    xArray[7] = 270;
+//    xArray[8] = 475;
+//    xArray[9] = 475;
 
-    yArray[0] = 0;
-    yArray[1] = 0;
-    yArray[2] = 155;
-    yArray[3] = 155;
-    yArray[4] = 360;
-    yArray[5] = 360;
-    yArray[6] = 360;
-    yArray[7] = 30;
-    yArray[8] = 30;
-    yArray[9] = 160;
+//    yArray[0] = 0;
+//    yArray[1] = 0;
+//    yArray[2] = 155;
+//    yArray[3] = 155;
+//    yArray[4] = 360;
+//    yArray[5] = 360;
+//    yArray[6] = 360;
+//    yArray[7] = 30;
+//    yArray[8] = 30;
+//    yArray[9] = 160;
 
     pointReached = 0;
 
-    x_destination = xArray[pointReached];
-    y_destination = yArray[pointReached];
-    x_final = 420;
-    y_final = 180;
+    x_destination = 0;
+    y_destination = 0;
+//    x_final = 420;
+//    y_final = 180;
+    x_final = 150;
+    y_final = 250;
     distance = getDistanceToEnd();
     deadbandRotation = 0.02;
 
@@ -1016,7 +1053,7 @@ void MainWindow::initData(TKobukiData robotdata){
     isLineTracking = false;
 
     angle_lidar = 0;
-    min_dist_lidar = 0;
+    min_dist_lidar = 300;
 
 
     init = false;
@@ -1114,6 +1151,7 @@ void MainWindow::on_pushButton_10_clicked()//start automatic
 
         starMovement = true;
         manualNavigation = false;
+        isLineTracking = true;
     }
 
 }
