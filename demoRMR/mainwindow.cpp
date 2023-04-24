@@ -116,10 +116,30 @@ void MainWindow::updateMap(){
             continue;
         }
 
-        if(angle <= 90 && dist < minDist && min_dist_lidar == 300){
-            minDist = dist;
-            min_dist_lidar = dist;
-        }
+//        if(isLineTracking){
+//            if((angle <= 90 || angle >= 270) && dist < minDist){
+//                minDist = dist;
+//            }
+//        }
+
+//        if(minDist < 35 && min_dist_lidar == 300){
+//            starMovement = false;
+//            min_dist_lidar = minDist;
+//            stopRobot();
+
+
+//            Point point = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
+//            x_destination = point.x;
+//            y_destination = point.y;
+//            cout << "min_dist_lidar: " << min_dist_lidar << endl;
+//            cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
+//            cout << "Blizko steny Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
+//            distance = getDistanceToEnd();
+
+//            starMovement = true;
+//        }
+
+
         switch(k) {
             case 203:
                 lidar_270 = dist;
@@ -279,13 +299,50 @@ void MainWindow::robotMovement(TKobukiData robotdata){
     cout << "-------------------- ROBOT MOVEMENT\n" << endl;
     calculateXY(robotdata);
 
-    if(isOnLine() && isLineTracking == false){
 
+    if(isLineTracking == false){
         Point center = findLastValidPoint(map, {(int)x,(int)y}, {(int)x_final,(int)y_final});
+        if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
+                center.y >= y_final - 5 && center.y <= y_final + 5){
+            cout << "(" << x << ", " << y << ") lies on the line." << endl;
+            x_destination = center.x;
+            y_destination = center.y;
+            cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
+            cout << "Sledovanie ciary Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
+            distance = getDistanceToEnd();
+            isLineTracking = true;
+        }
+    }
 
-        cout << " center x: " << center.x << " y: " << center.y << " x: " << x_destination << " y: " << y_destination << endl;
 
-//        if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
+//    if(isOnLine() && isLineTracking == false){
+
+
+
+//        cout << " center x: " << center.x << " y: " << center.y << " x: " << x_destination << " y: " << y_destination << endl;
+
+////        if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
+////                center.y >= y_final - 5 && center.y <= y_final + 5){
+////            cout << "(" << x << ", " << y << ") lies on the line." << endl;
+////            x_destination = center.x;
+////            y_destination = center.y;
+////            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
+////            isLineTracking = true;
+////        }
+
+
+//        if(center.x >= x - 5 && center.x <= x + 5 &&
+//                center.y >= y - 5 && center.y <= y + 5){
+//            cout << "pointReached LIDAR_270: " << lidar_270 << endl;
+//            Point point = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
+//            x_destination = point.x;
+//            y_destination = point.y;
+//            cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
+//            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
+//            distance = getDistanceToEnd();
+////            isLineTracking = true;
+//        }
+//        else if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
 //                center.y >= y_final - 5 && center.y <= y_final + 5){
 //            cout << "(" << x << ", " << y << ") lies on the line." << endl;
 //            x_destination = center.x;
@@ -294,28 +351,7 @@ void MainWindow::robotMovement(TKobukiData robotdata){
 //            isLineTracking = true;
 //        }
 
-
-        if(center.x >= x - 5 && center.x <= x + 5 &&
-                center.y >= y - 5 && center.y <= y + 5){
-            cout << "pointReached LIDAR_270: " << lidar_270 << endl;
-            Point point = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
-            x_destination = point.x;
-            y_destination = point.y;
-            cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
-            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
-            distance = getDistanceToEnd();
-            isLineTracking = true;
-        }
-        else if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
-                center.y >= y_final - 5 && center.y <= y_final + 5){
-            cout << "(" << x << ", " << y << ") lies on the line." << endl;
-            x_destination = center.x;
-            y_destination = center.y;
-            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
-            isLineTracking = true;
-        }
-
-    }
+//    }
 
     double correctRotation = getRightOrientation();
     double distanceToEnd = getDistanceToEnd();
@@ -382,7 +418,7 @@ void MainWindow::robotMovement(TKobukiData robotdata){
                             starMovement = false;
                         }
 
-                        // ak je vzdialenost steny od robota v rozmedzi 0-90 mensia ako 40 tak ho posuniem v x osi dozadu
+//                        //ak je; vzdialenost steny od robota v rozmedzi 0-90 mensia ako 40 tak ho posuniem v x osi dozadu
 //                        if(min_dist_lidar < 40) {
 //                            x_destination -= 15;
 //                            distance = getDistanceToEnd();
@@ -504,8 +540,8 @@ void MainWindow::calculateXY(TKobukiData robotdata){
 bool MainWindow::isOnLine(){
 
     //priamka medzi bodmi
-    slope = (y_final - 0) / (x_final - 0);
-    y_intercept = 0 - slope * 0;
+    slope = (y_final - y) / (x_final - x);
+    y_intercept = y - slope * x;
 
     double y_test = slope * x + y_intercept;
 
@@ -516,7 +552,7 @@ bool MainWindow::isOnLine(){
 Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point pointEnd) {
     int grid_size = 5; // Grid size in pixels
     int grid_offset = 60; // Grid offset in pixels
-    int wall_distance = 8; // Wall distance in cm/5. So 50cm/5 = 10
+    int wall_distance = 10; // Wall distance in cm/5. So 50cm/5 = 10
 
     pointStart.x = pointStart.x/grid_size + grid_offset;
     pointStart.y = pointStart.y/grid_size + grid_offset;
@@ -536,36 +572,64 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
     int y = pointStart.y;
     int err = dx - dy;
 
+    bool isObstacle = false;
+
 
     while (true) {
-        cout << "Mapa x: " << x << " y: " << y << " hodnota: " << map[y][x] << endl;
+//        cout << "Mapa x: " << x << " y: " << y << " hodnota: " << map[y][x] << endl;
         // Check if the current cell is a wall
-        if (map[y][x] != 0) {
-            // If it is a wall, return the previous cell as the last valid point
-//            Point finalPoint =  Point{x - sx, y - sy};
-//            x_destination = (finalPoint.x - grid_offset) * grid_size;
-//            y_destination = (finalPoint.y - grid_offset) * grid_size;
 
-            // If it is a wall, return the point at the specified distance from the wall
-            double angle = atan2(pointEnd.y - pointStart.y, pointEnd.x - pointStart.x);
-            x = (x - cos(angle) * wall_distance) * grid_size - grid_offset * grid_size;
-            y = (y - sin(angle) * wall_distance) * grid_size - grid_offset * grid_size;
-            cout << "Pozicia na ktoru idem je x: " << x << " y: " << y << endl;
-            return Point{x, y};
+        int radius = 5;   // Radius in cm
+        // Convert radius from cm to array index
+        int radiusIndex = radius;  // Assuming each array index is 1 cm
+        int startX = max(x - radiusIndex, 0);
+        int endX = min(x + radiusIndex, 239);
+        int startY = max(y - radiusIndex, 0);
+        int endY = min(y + radiusIndex, 239);
+
+        // Loop through the elements in the 5x5 area
+        for (int x_test = startX; x_test <= endX; x_test++) {
+            if(x_test > 240){
+                break;
+            }
+            for (int y_test = startY; y_test <= endY; y_test++) {
+                if(y_test > 240){
+                    break;
+                }
+                // Check if the current element has the value 1
+                if (map[y_test][x_test] != 0) {
+                    // Found a 1 in the 2 cm radius
+                    cout << "Nasiel som prekazku a 1 at x: " << x << ", y: " << y << endl;
+                    isObstacle = true;
+                    x = x_test;
+                    y = y_test;
+                    break;
+                }
+            }
+            if(isObstacle){
+                break;
+            }
         }
 
+        if (map[y][x] != 0 || isObstacle) {
+           // If it is a wall, return the point at the specified distance from the wall
+           double angle = atan2(pointEnd.y - pointStart.y, pointEnd.x - pointStart.x);
+           x = (x - cos(angle) * wall_distance) * grid_size - grid_offset * grid_size;
+           y = (y - sin(angle) * wall_distance) * grid_size - grid_offset * grid_size;
+           return Point{x, y};
+       }
 
-        // Check if the current cell is the destination point
-        if (Point{x, y} == pointEnd) {
-            // If it is the destination point, return it as the last valid point
-            Point finalPoint = pointEnd;
-            x = (finalPoint.x - grid_offset) * grid_size;
-            y = (finalPoint.y - grid_offset) * grid_size;
 
-            cout << "pointEnd" << endl;
-            cout << "Pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
-            return Point{x, y};
-        }
+       // Check if the current cell is the destination point
+       if (Point{x, y} == pointEnd) {
+           // If it is the destination point, return it as the last valid point
+           Point finalPoint = pointEnd;
+           x = (finalPoint.x - grid_offset) * grid_size;
+           y = (finalPoint.y - grid_offset) * grid_size;
+
+           cout << "pointEnd" << endl;
+           return Point{x, y};
+       }
 
         // Update the error and move to the next cell
         int e2 = 2 * err;
@@ -613,23 +677,23 @@ Point MainWindow::walkAlongWall(int map[240][240], Point point, int yDirection, 
                 y_substraction -= 2;
             }
 
-            if(abs(xControl) > 8){
-                int temp = abs(xControl) - 8;
-                if (xControl < 0) {
-                   x -= temp;
-                } else {
-                    x += temp;
-                }
+//            if(abs(xControl) > 8){
+//                int temp = abs(xControl) - 8;
+//                if (xControl < 0) {
+//                   x -= temp;
+//                } else {
+//                    x += temp;
+//                }
 
-            }
-            if(abs(yControl) > 8){
-                int temp = abs(yControl) - 8;
-                if (yControl < 0) {
-                   y -= temp;
-                } else {
-                    y += temp;
-                }
-            }
+//            }
+//            if(abs(yControl) > 8){
+//                int temp = abs(yControl) - 8;
+//                if (yControl < 0) {
+//                   y -= temp;
+//                } else {
+//                    y += temp;
+//                }
+//            }
 
             x = x - x_substraction;
             y = y - y_substraction;
@@ -644,24 +708,8 @@ Point MainWindow::walkAlongWall(int map[240][240], Point point, int yDirection, 
 
             cout << "xControl: " << xControl << " yControl: " << yControl << endl;
 
-            cout << "x: " << x << " y: " << y << endl;
-            if(abs(xControl) > 8){
-                int temp = abs(xControl) - 8;
-                if (xControl < 0) {
-                   x -= temp;
-                } else {
-                    x += temp;
-                }
 
-            }
-            if(abs(yControl) > 8){
-                int temp = abs(yControl) - 8;
-                if (yControl < 0) {
-                   y -= temp;
-                } else {
-                    y += temp;
-                }
-            }
+
 
             cout << "x: " << x << " y: " << y << endl;
             x = x + x_substraction;
@@ -691,6 +739,8 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
 
     Point newPoint = Point{x,y};
 
+    int distanceToWallMin = 5;
+    int distanceToWallMax = 7;
 
 
 
@@ -720,6 +770,16 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
                         cout << "Nova pozicia na ktoru idem je Direction::LEFT " << endl;
                         cout << "x: " << x << " y: " << y << endl;
                         newPoint = walkAlongWall(map, point, 0, -1, sy, -1, wall_distance, 0);
+                        //blizko steny
+                        if(sy < distanceToWallMin){
+                            newPoint.y = newPoint.y - (distanceToWallMin - sy);
+                        }
+                        //daleko steny
+                        if(sy > distanceToWallMax){
+                            newPoint.y = newPoint.y + (sy - distanceToWallMax);
+                        }
+
+
                         isBreak = true;
                         lastDirection = Direction::LEFT;
                         break;
@@ -763,6 +823,15 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
                         cout << "Nova pozicia na ktoru idem je Direction::RIGHT " << endl;
                         cout << "x: " << x << " y: " << y << endl;
                         newPoint = walkAlongWall(map, point, 0, 1, -sy, 1, -wall_distance, 0);
+
+                        if(abs(sy) < distanceToWallMin){
+                            newPoint.y = newPoint.y + (distanceToWallMin - abs(sy));
+                        }
+
+                        if(abs(sy) > distanceToWallMax){
+                            newPoint.y = newPoint.y - (abs(sy) - distanceToWallMax);
+                        }
+
                         isBreak = true;
                         lastDirection = Direction::RIGHT;
                         break;
@@ -847,6 +916,12 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
                         cout << "Nova pozicia na ktoru idem je Direction::UP " << endl;
                         cout << "x: " << x << " y: " << y << endl;
                         newPoint = walkAlongWall(map, point, 1, 0, 1, sx, 0, -wall_distance);
+                        if(sx < distanceToWallMin){
+                            newPoint.x = newPoint.x - (distanceToWallMin - sx);
+                        }
+                        if(abs(sx) > distanceToWallMax){
+                            newPoint.x = newPoint.x + (abs(sx) - distanceToWallMax);
+                        }
                         isBreak = true;
                         lastDirection = Direction::UP;
                         break;
@@ -885,6 +960,13 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
                         cout << "Nova pozicia na ktoru idem je Direction::DOWN " << endl;
                         cout << "x: " << x << " y: " << y << endl;
                         newPoint = walkAlongWall(map, point, -1, 0, -1, -sx, 0, wall_distance);
+                        if(abs(sx) < distanceToWallMin){
+                            newPoint.x = newPoint.x + (distanceToWallMin - abs(sx));
+                        }
+                        if(abs(sx) > distanceToWallMax){
+                            newPoint.x = newPoint.x - (abs(sx) - distanceToWallMax);
+                        }
+
                         isBreak = true;
                         lastDirection = Direction::DOWN;
                         break;
@@ -1010,10 +1092,17 @@ void MainWindow::initData(TKobukiData robotdata){
 
     x_destination = 0;
     y_destination = 0;
+
+//    x_final = 350;
+//    y_final = 0;
 //    x_final = 420;
 //    y_final = 180;
-    x_final = 150;
-    y_final = 250;
+//    x_final = 200;
+//    y_final = 295;
+
+    x_final = 280;
+    y_final = 200;
+
     distance = getDistanceToEnd();
     deadbandRotation = 0.02;
 
