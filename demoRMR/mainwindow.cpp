@@ -116,13 +116,13 @@ void MainWindow::updateMap(){
             continue;
         }
 
-//        if(isLineTracking){
-//            if((angle <= 90 || angle >= 270) && dist < minDist){
+//        if(speed >= 0){
+//            if((angle <= 90) && dist < minDist){
 //                minDist = dist;
 //            }
 //        }
 
-//        if(minDist < 35 && min_dist_lidar == 300){
+//        if(minDist < 40 && min_dist_lidar == 300){
 //            starMovement = false;
 //            min_dist_lidar = minDist;
 //            stopRobot();
@@ -136,7 +136,7 @@ void MainWindow::updateMap(){
 //            cout << "Blizko steny Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
 //            distance = getDistanceToEnd();
 
-//            starMovement = true;
+////            starMovement = true;
 //        }
 
 
@@ -410,6 +410,7 @@ void MainWindow::robotMovement(TKobukiData robotdata){
                 if(!manualNavigation){
                     if(pointReached < 2){
                         isLineTracking = false;
+                        min_dist_lidar = 300;
                         cout << "pointReached min_dist_lidar: " << min_dist_lidar << endl;
                         cout << "pointReached LIDAR_270: " << lidar_270 << endl;
                         if((x_final >= x - 2.5) && (x_final <= x + 2.5) &&
@@ -573,6 +574,8 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
     int err = dx - dy;
 
     bool isObstacle = false;
+    int x_test = 0;
+    int y_test = 0;
 
 
     while (true) {
@@ -588,11 +591,11 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
         int endY = min(y + radiusIndex, 239);
 
         // Loop through the elements in the 5x5 area
-        for (int x_test = startX; x_test <= endX; x_test++) {
+        for (x_test = startX; x_test <= endX; x_test++) {
             if(x_test > 240){
                 break;
             }
-            for (int y_test = startY; y_test <= endY; y_test++) {
+            for (y_test = startY; y_test <= endY; y_test++) {
                 if(y_test > 240){
                     break;
                 }
@@ -601,8 +604,6 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
                     // Found a 1 in the 2 cm radius
                     cout << "Nasiel som prekazku a 1 at x: " << x << ", y: " << y << endl;
                     isObstacle = true;
-                    x = x_test;
-                    y = y_test;
                     break;
                 }
             }
@@ -611,7 +612,7 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
             }
         }
 
-        if (map[y][x] != 0 || isObstacle) {
+        if (map[y][x] != 0) {
            // If it is a wall, return the point at the specified distance from the wall
            double angle = atan2(pointEnd.y - pointStart.y, pointEnd.x - pointStart.x);
            x = (x - cos(angle) * wall_distance) * grid_size - grid_offset * grid_size;
@@ -622,6 +623,13 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
 
        // Check if the current cell is the destination point
        if (Point{x, y} == pointEnd) {
+           if(isObstacle){
+               double angle = atan2(pointEnd.y - pointStart.y, pointEnd.x - pointStart.x);
+               x_test = (x_test - cos(angle) * wall_distance) * grid_size - grid_offset * grid_size;
+               y_test = (y_test - sin(angle) * wall_distance) * grid_size - grid_offset * grid_size;
+               return Point{x_test, y_test};
+           }
+
            // If it is the destination point, return it as the last valid point
            Point finalPoint = pointEnd;
            x = (finalPoint.x - grid_offset) * grid_size;
@@ -1093,15 +1101,15 @@ void MainWindow::initData(TKobukiData robotdata){
     x_destination = 0;
     y_destination = 0;
 
-//    x_final = 350;
-//    y_final = 0;
+    x_final = 350;
+    y_final = 0;
 //    x_final = 420;
 //    y_final = 180;
 //    x_final = 200;
 //    y_final = 295;
 
-    x_final = 280;
-    y_final = 200;
+//    x_final = 280;
+//    y_final = 200;
 
     distance = getDistanceToEnd();
     deadbandRotation = 0.02;
