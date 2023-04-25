@@ -195,6 +195,10 @@ private:
     double x_final;
     double y_final;
 
+    bool isFreeMovement;
+
+    bool isObstacleInPath;
+
 
 public slots:
      void setUiValues(double robotX,double robotY,double robotFi);

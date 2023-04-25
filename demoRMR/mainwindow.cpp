@@ -72,8 +72,8 @@ void MainWindow::paintEvent(QPaintEvent *event)
             for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
             {
                 int dist=copyOfLaserData.Data[k].scanDistance/20; ///vzdialenost nahodne predelena 20 aby to nejako vyzeralo v okne.. zmen podla uvazenia
-                int xp=rect.width()-(rect.width()/2+dist*2*sin((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().x(); //prepocet do obrazovky
-                int yp=rect.height()-(rect.height()/2+dist*2*cos((360.0-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().y();//prepocet do obrazovky
+                int xp=rect.width()-(rect.width()/2+dist*2*sin((360-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().x(); //prepocet do obrazovky
+                int yp=rect.height()-(rect.height()/2+dist*2*cos((360-copyOfLaserData.Data[k].scanAngle)*3.14159/180.0))+rect.topLeft().y();//prepocet do obrazovky
                 if(rect.contains(xp,yp))//ak je bod vo vnutri nasho obdlznika tak iba vtedy budem chciet kreslit
                     painter.drawEllipse(QPoint(xp, yp),2,2);
             }
@@ -111,12 +111,12 @@ void MainWindow::updateMap(){
         }*/
 
         dist=copyOfLaserData.Data[k].scanDistance/10;
-        angle = 360-copyOfLaserData.Data[k].scanAngle;
+        angle = copyOfLaserData.Data[k].scanAngle;
         if(dist <= 15 || dist > 300 || (dist >= 64 && dist <= 70)){
             continue;
         }
 
-//        if(speed >= 0){
+//        if(speed >= 0 && isFreeMovement){
 //            if((angle <= 90) && dist < minDist){
 //                minDist = dist;
 //            }
@@ -136,7 +136,7 @@ void MainWindow::updateMap(){
 //            cout << "Blizko steny Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
 //            distance = getDistanceToEnd();
 
-////            starMovement = true;
+//            starMovement = true;
 //        }
 
 
@@ -300,6 +300,7 @@ void MainWindow::robotMovement(TKobukiData robotdata){
     calculateXY(robotdata);
 
 
+
     if(isLineTracking == false){
         Point center = findLastValidPoint(map, {(int)x,(int)y}, {(int)x_final,(int)y_final});
         if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
@@ -313,45 +314,6 @@ void MainWindow::robotMovement(TKobukiData robotdata){
             isLineTracking = true;
         }
     }
-
-
-//    if(isOnLine() && isLineTracking == false){
-
-
-
-//        cout << " center x: " << center.x << " y: " << center.y << " x: " << x_destination << " y: " << y_destination << endl;
-
-////        if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
-////                center.y >= y_final - 5 && center.y <= y_final + 5){
-////            cout << "(" << x << ", " << y << ") lies on the line." << endl;
-////            x_destination = center.x;
-////            y_destination = center.y;
-////            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
-////            isLineTracking = true;
-////        }
-
-
-//        if(center.x >= x - 5 && center.x <= x + 5 &&
-//                center.y >= y - 5 && center.y <= y + 5){
-//            cout << "pointReached LIDAR_270: " << lidar_270 << endl;
-//            Point point = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
-//            x_destination = point.x;
-//            y_destination = point.y;
-//            cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
-//            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
-//            distance = getDistanceToEnd();
-////            isLineTracking = true;
-//        }
-//        else if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
-//                center.y >= y_final - 5 && center.y <= y_final + 5){
-//            cout << "(" << x << ", " << y << ") lies on the line." << endl;
-//            x_destination = center.x;
-//            y_destination = center.y;
-//            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
-//            isLineTracking = true;
-//        }
-
-//    }
 
     double correctRotation = getRightOrientation();
     double distanceToEnd = getDistanceToEnd();
@@ -411,8 +373,10 @@ void MainWindow::robotMovement(TKobukiData robotdata){
                     if(pointReached < 2){
                         isLineTracking = false;
                         min_dist_lidar = 300;
+                        isFreeMovement = false;
                         cout << "pointReached min_dist_lidar: " << min_dist_lidar << endl;
                         cout << "pointReached LIDAR_270: " << lidar_270 << endl;
+
                         if((x_final >= x - 2.5) && (x_final <= x + 2.5) &&
                                 (y_final >= y - 2.5) && (y_final <= y + 2.5)){
                             isStop = true;
@@ -436,8 +400,11 @@ void MainWindow::robotMovement(TKobukiData robotdata){
 //                        }
 
                         Point point = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
-                        x_destination = point.x;
-                        y_destination = point.y;
+                        Point center = findLastValidPoint(map, {(int)x,(int)y}, {point.x,point.y});
+//                        x_destination = point.x;
+//                        y_destination = point.y;
+                        x_destination = center.x;
+                        y_destination = center.y;
                         cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
                         cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
                         distance = getDistanceToEnd();
@@ -610,6 +577,15 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
             if(isObstacle){
                 break;
             }
+        }
+
+        if(isObstacle && pointEnd.x != ((int)x_final/grid_size + grid_offset) && pointEnd.y != ((int)y_final/grid_size + grid_offset)){
+            isObstacleInPath = true;
+            cout << "Nasiel som prekazku a 1 at pointEnd.x: " << pointEnd.x << ", x: " << (int)x_final << " pointEnd.y: " << pointEnd.y << ", y: " << (int)y_final << endl;
+            double angle = atan2(pointEnd.y - pointStart.y, pointEnd.x - pointStart.x);
+            x_test = (x_test - cos(angle) * wall_distance) * grid_size - grid_offset * grid_size;
+            y_test = (y_test - sin(angle) * wall_distance) * grid_size - grid_offset * grid_size;
+            return Point{x_test, y_test};
         }
 
         if (map[y][x] != 0) {
@@ -891,6 +867,7 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
                 break;
             }
         }
+        isFreeMovement = true;
         newPoint.x = (newPoint.x - grid_offset) * grid_size;
         newPoint.y = (newPoint.y - grid_offset) * grid_size;
         return newPoint;
@@ -1025,6 +1002,7 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
             }
         }
     }
+    isFreeMovement = true;
     newPoint.x = (newPoint.x - grid_offset) * grid_size;
     newPoint.y = (newPoint.y - grid_offset) * grid_size;
     return newPoint;
