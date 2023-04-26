@@ -89,7 +89,7 @@ void MainWindow::paintEvent(QPaintEvent *event)
 }
 
 void MainWindow::updateMap(){
-    cout << "zaciatok UPDATE MAP" << endl;
+//    cout << "zaciatok UPDATE MAP---------------------" << endl;
     int grid_size = 5; // Grid size in pixels
     int grid_offset = 60; // Grid offset in pixels
     int dist=0;
@@ -103,20 +103,27 @@ void MainWindow::updateMap(){
     double minDist = 300;
     double angle = 0;
 
+//    copyOfLaserData.numberOfScans
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
        /* if(copyOfLaserData.Data[k].scanQuality != 0){
             continue;
         }*/
 
+
+
         dist=copyOfLaserData.Data[k].scanDistance/10;
         angle = 360-copyOfLaserData.Data[k].scanAngle;
 
 //        cout << "k: " << k << " angle: " << angle <<  endl;
 
-        if(dist <= 15 || dist > 300 || (dist >= 64 && dist <= 70)){
+        if(dist < 15 || dist > 300 || (dist >= 64 && dist <= 70)){
             continue;
         }
+
+//        if(dist < 15){
+//            dist = 15;
+//        }
 
 //        if(speed >= 0 && isFreeMovement){
 //            if((angle <= 90) && dist < minDist){
@@ -141,31 +148,124 @@ void MainWindow::updateMap(){
 //            starMovement = true;
 //        }
 
+        if(k == copyOfLaserData.numberOfScans - 1){
+            lidar_0 = dist;
+            if(lidar_0 < 40){
+                cout << "predna stena je daleko: " << dist << endl;
+                isMovementBasedOnLidar = true;
+            }
+        }
         if(angle - 270 > 0 && angle - 270 <= 4){
             lidar_270 = dist;
         }
-
-//        if(isMovementBasedOnLidar == false && min_dist_lidar < 30){
-//            isMovementBasedOnLidar = true;
-//        }
-
-        angleRad = (((360-copyOfLaserData.Data[k].scanAngle)*PI)/180.0);
-
-//        cout << "x robot: " << x << " y robot: " << y << " angleRad: " << angleRad << " gyroRadMap: " << gyroRadMap << endl;
-
-        xr = x + dist*cos(gyroRadMap + angleRad);
-        yr = y + dist*sin(gyroRadMap + angleRad);
-
-        x_wall = xr/grid_size + grid_offset;
-        y_wall = yr/grid_size + grid_offset;
-
-
-        if((y_wall > 0 && y_wall < numberOfSqareInMap) && (x_wall > 0 && x_wall < numberOfSqareInMap)){
-            numberFromMap = map[y_wall][x_wall];
-             map[y_wall][x_wall] = numberFromMap + 1;
+        if(angle - 315 > 0 && angle - 315 <= 4){
+            lidar_315 = dist;
+        }
+        if(angle < 270 && angle >= 225){
+            lidar_225_270 = dist;
+        }
+        if(angle < 315 && angle >= 270){
+//            if(true){
+//                lidar_315_270 = dist;
+//                cout << "Odmerana vzdialenost dist lidar_315_270: " << lidar_315_270 << endl;
+//            }
+//            if(k == 0){
+//                lidar_315_270 = dist;
+//                cout << "Odmerana vzdialenost dist lidar_315_270: " << lidar_315_270 << endl;
+//            }
+//            if(dist < lidar_315_270){
+//                lidar_315_270 = dist;
+//                cout << "Odmerana vzdialenost  dist lidar_315_270: " << lidar_315_270 << endl;
+//            }
+//            cout << "Odmerana vzdialenost dist lidar_315_270: " << lidar_315_270 << endl;
+            lidar_315_270 = dist;
+        }
+        if(angle > 315 && angle < 360){
+            if(dist < 35){
+                cout << "predna stena je daleko: " << dist << endl;
+                isMovementBasedOnLidar = true;
+            }
+            lidar_360_315 = dist;
         }
 
+        if(angle >= 0 && angle <= 45){
+            lidar_0_45 = dist;
+        }
+        if(angle > 45 && angle <= 90){
+            lidar_45_90 = dist;
+        }
+
+
+
+
+
+        if(rotationspeed == 0){
+            angleRad = (((360-copyOfLaserData.Data[k].scanAngle)*PI)/180.0);
+
+            xr = x + dist*cos(gyroRadMap + angleRad);
+            yr = y + dist*sin(gyroRadMap + angleRad);
+
+            x_wall = xr/grid_size + grid_offset;
+            y_wall = yr/grid_size + grid_offset;
+
+
+            if((y_wall > 0 && y_wall < numberOfSqareInMap) && (x_wall > 0 && x_wall < numberOfSqareInMap)){
+                numberFromMap = map[y_wall][x_wall];
+                 map[y_wall][x_wall] = numberFromMap + 1;
+            }
+        }
+
+
     }
+}
+
+void MainWindow::walkAlongWallLidar(){
+//    calculateXY(robotdata);
+//    cout << "walkAlongWallLidar--------------" << endl;
+
+
+    if(lidar_0 < 50){
+//        cout << "predny senzor" << endl;
+        forwardSpeed = 0;
+        rotationspeed = 0.5;
+        robot.setRotationSpeed(rotationspeed);
+    }
+    else if(lidar_0_45 < 40 || lidar_45_90 < 40){
+        forwardSpeed = 150;
+        rotationspeed = -150;
+        robot.setArcSpeed(forwardSpeed, rotationspeed);
+    }
+    else if(lidar_360_315 < 40 || lidar_315_270 < 40){
+        forwardSpeed = 150;
+        rotationspeed = 125;
+        robot.setArcSpeed(forwardSpeed, rotationspeed);
+    }
+    else if(lidar_360_315 < 50 || lidar_315_270 < 50){
+        forwardSpeed = 150;
+        rotationspeed = 150;
+        robot.setArcSpeed(forwardSpeed, rotationspeed);
+    }
+    else if(lidar_315 < 50){
+//        cout << "pravy senzor malo" << endl;
+        forwardSpeed = 150;
+        rotationspeed = 150;
+        robot.setArcSpeed(forwardSpeed, rotationspeed);
+
+    }
+    else if(lidar_315 > 60){
+//        cout << "pravy senzor vela" << endl;
+        forwardSpeed = 150;
+        rotationspeed = -250;
+        robot.setArcSpeed(forwardSpeed, rotationspeed);
+
+    }
+    else{
+//        cout << "idem rovno" << endl;
+        forwardSpeed = 200;
+        rotationspeed = 0;
+        robot.setTranslationSpeed(forwardSpeed);
+    }
+
 }
 
 /// toto je slot. niekde v kode existuje signal, ktory je prepojeny. pouziva sa napriklad (v tomto pripade) ak chcete dostat data z jedneho vlakna (robot) do ineho (ui)
@@ -186,40 +286,61 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
     }
 
     if(starMovement){
-        robotMovement(robotdata);
+        calculateXY(robotdata);
+
+        if((x_final >= x - 2.5) && (x_final <= x + 2.5) &&
+                (y_final >= y - 2.5) && (y_final <= y + 2.5)){
+            cout << "Som tu 4" << endl;
+            cout << "Som v ciely" << endl;
+            stopRobot();
+            isStop = true;
+            starMovement = false;
+        }
+
+        if(isLineTracking == false){
+
+            Point center = findLastValidPoint(map, {(int)x,(int)y}, {(int)x_final,(int)y_final});
+            if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
+                    center.y >= y_final - 5 && center.y <= y_final + 5){
+                cout << "Som tu 3" << endl;
+                cout << "(" << x << ", " << y << ") lies on the line." << endl;
+                x_destination = center.x;
+                y_destination = center.y;
+                cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
+                cout << "Sledovanie ciary Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
+                distance = getDistanceToEnd();
+                isLineTracking = true;
+            }
+        }
+
+        if(isMovementBasedOnLidar){
+            cout << "Som tu 1" << endl;
+            walkAlongWallLidar();
+            Point center = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
+//                        Point center = findLastValidPoint(map, {(int)x,(int)y}, {point.x,point.y});
+            x_destination = center.x;
+            y_destination = center.y;
+            cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
+            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
+            distance = getDistanceToEnd();
+            if(distance > 80 && lidar_0 > 80 && lidar_360_315 > 50){
+                isMovementBasedOnLidar = false;
+            }
+        }
+        else{
+            cout << "Som tu 2" << endl;
+            forwardSpeed = 0;
+            rotationspeed = 0;
+            robotMovement(robotdata);
+        }
+
+
+//        robotMovement(robotdata);
     }
-
-    ///tu mozete robit s datami z robota
-    /// ale nic vypoctovo narocne - to iste vlakno ktore cita data z robota
-    ///teraz tu posielam rychlosti na zaklade toho co setne joystick a vypisujeme data z robota(kazdy 5ty krat. ale mozete skusit aj castejsie). vyratajte si polohu. a vypiste spravnu
-    /// tuto joystick cast mozete vklude vymazat,alebo znasilnit na vas regulator alebo ake mate pohnutky
-/*    if(forwardspeed==0 && rotationspeed!=0)
-        robot.setRotationSpeed(rotationspeed);
-    else if(forwardspeed!=0 && rotationspeed==0)
-        robot.setTranslationSpeed(forwardspeed);
-    else if((forwardspeed!=0 && rotationspeed!=0))
-        robot.setArcSpeed(forwardspeed,forwardspeed/rotationspeed);
-    else
-        robot.setTranslationSpeed(0);*/
-
-///TU PISTE KOD... TOTO JE TO MIESTO KED NEVIETE KDE ZACAT,TAK JE TO NAOZAJ TU. AK AJ TAK NEVIETE, SPYTAJTE SA CVICIACEHO MA TU NATO STRING KTORY DA DO HLADANIA XXX
 
     if(datacounter%5)
     {
-
-        ///ak nastavite hodnoty priamo do prvkov okna,ako je to na tychto zakomentovanych riadkoch tak sa moze stat ze vam program padne
-                // ui->lineEdit_2->setText(QString::number(robotdata.EncoderRight));
-                //ui->lineEdit_3->setText(QString::number(robotdata.EncoderLeft));
-                //ui->lineEdit_4->setText(QString::number(robotdata.GyroAngle));
-                /// lepsi pristup je nastavit len nejaku premennu, a poslat signal oknu na prekreslenie
-                /// okno pocuva vo svojom slote a vasu premennu nastavi tak ako chcete. prikaz emit to presne takto spravi
-                /// viac o signal slotoch tu: https://doc.qt.io/qt-5/signalsandslots.html
-        ///posielame sem nezmysli.. pohrajte sa nech sem idu zmysluplne veci
         emit uiValuesChanged(x,y,robotdata.GyroAngle/100.0);
-        ///toto neodporucam na nejake komplikovane struktury.signal slot robi kopiu dat. radsej vtedy posielajte
-        /// prazdny signal a slot bude vykreslovat strukturu (vtedy ju musite mat samozrejme ako member premmennu v mainwindow.ak u niekoho najdem globalnu premennu,tak bude cistit bludisko zubnou kefkou.. kefku dodam)
-        /// vtedy ale odporucam pouzit mutex, aby sa vam nestalo ze budete pocas vypisovania prepisovat niekde inde
-
     }
     datacounter++;
 
@@ -230,10 +351,11 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
 
 
 
+
 void MainWindow::robotSlowdown(){
-    speed -= 5;
-    movementForward(speed);
-    if(speed < 0){
+    forwardSpeed -= 5;
+    movementForward(forwardSpeed);
+    if(forwardSpeed < 0){
         cout << "zastavujem" << endl;
         stopRobot();
     }
@@ -241,7 +363,7 @@ void MainWindow::robotSlowdown(){
 
 void MainWindow::stopRobot(){
     movementForward(0);
-    speed = 0;
+    forwardSpeed = 0;
     controllerMove.UpdateOutputToZero();
     isRobotMove = false;
 }
@@ -296,23 +418,7 @@ double MainWindow::calculateShortestRotation(double correctRotation){
 void MainWindow::robotMovement(TKobukiData robotdata){
 
     cout << "-------------------- ROBOT MOVEMENT\n" << endl;
-    calculateXY(robotdata);
 
-
-
-    if(isLineTracking == false){
-        Point center = findLastValidPoint(map, {(int)x,(int)y}, {(int)x_final,(int)y_final});
-        if(center.x >= x_final - 5 && center.x <= x_final + 5 &&
-                center.y >= y_final - 5 && center.y <= y_final + 5){
-            cout << "(" << x << ", " << y << ") lies on the line." << endl;
-            x_destination = center.x;
-            y_destination = center.y;
-            cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
-            cout << "Sledovanie ciary Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
-            distance = getDistanceToEnd();
-            isLineTracking = true;
-        }
-    }
 
     double correctRotation = getRightOrientation();
     double distanceToEnd = getDistanceToEnd();
@@ -368,8 +474,15 @@ void MainWindow::robotMovement(TKobukiData robotdata){
                 stopRobot();
 
 
+                if((x_final >= x - 2.5) && (x_final <= x + 2.5) &&
+                        (y_final >= y - 2.5) && (y_final <= y + 2.5)){
+                    isStop = true;
+                    starMovement = false;
+                }
+
                 if(!manualNavigation){
                     if(pointReached < 2){
+                        cout << "dosiahol som bod" << endl;
                         isLineTracking = false;
                         min_dist_lidar = 300;
                         isFreeMovement = false;
@@ -403,19 +516,20 @@ void MainWindow::robotMovement(TKobukiData robotdata){
                 isRobotRotate = false;
             }
             else{
+                distance = getDistanceToEnd();
                 isRobotRotate = false;
                 double outputMove = controllerMove.Update(0, distanceToEnd);
                 cout << "Zrychlujem" << endl;
                 cout << "distance: " << distance << "distanceToEnd: "<< distanceToEnd << endl;
 
                 if(distance < 75 || lidar_0 <= 75){
-                    speed = max((50), min((250), std::abs(outputMove)));
+                    forwardSpeed = max((50), min((250), std::abs(outputMove)));
                 }else{
-                    speed = max((50), min((500), std::abs(outputMove)));
+                    forwardSpeed = max((50), min((350), std::abs(outputMove)));
                 }
 
-                cout << "speed: " << speed << endl;
-                movementForward(speed);
+                cout << "speed: " << forwardSpeed << endl;
+                movementForward(forwardSpeed);
                 isRobotMove = true;
             }
         }
@@ -455,14 +569,14 @@ void MainWindow::calculateXY(TKobukiData robotdata){
     distanceLW = tickToMeter*(delta_leftWheel);
     distanceRW = tickToMeter*(delta_rightWheel);
 
-    cout << "robotdata.GyroAngle/100: " << robotdata.GyroAngle/100 << " gyroStart: "<< gyroStart << endl;
+//    cout << "robotdata.GyroAngle/100: " << robotdata.GyroAngle/100 << " gyroStart: "<< gyroStart << endl;
 
     gyro = robotdata.GyroAngle/100 - gyroStart;
     double delta_distance  = (distanceLW + distanceRW) / 2.0;
     gyroRad = (((gyro)*PI)/180.0);
     gyroRadMap = gyroRad;
 
-    cout << "gyro: " << gyroRad << endl;
+//    cout << "gyro: " << gyroRad << endl;
 
     if(gyro < 0){
         gyro += 360;
@@ -472,15 +586,27 @@ void MainWindow::calculateXY(TKobukiData robotdata){
         gyroRad += 2*PI;
         gyroRadMap = gyroRad;
     }
-    x = x + (delta_distance  * cos(gyroRad))*100;
-    y = y + (delta_distance  * sin(gyroRad))*100;
+
+    if(forwardSpeed != 0 && rotationspeed != 0){
+        if((distanceRW - distanceLW) != 0){
+            x = x + ((d*(distanceRW + distanceLW)) / (2*(distanceRW - distanceLW))) * (sin(gyroRad) - sin(alfa)) * 100;
+            y = y - ((d*(distanceRW + distanceLW)) / (2*(distanceRW - distanceLW))) * (cos(gyroRad) - cos(alfa)) * 100;
+        }
+    }
+    else{
+        x = x + (delta_distance  * cos(gyroRad))*100;
+        y = y + (delta_distance  * sin(gyroRad))*100;
+    }
 
 
-    cout << "gyro: " << gyroRad << endl;
-    cout << "gyroRad: " << gyroRad << endl;
-    cout << "robotdata.GyroAngle: " << robotdata.GyroAngle/100 << endl;
 
+//    cout << "gyro: " << gyroRad << endl;
+//    cout << "gyroRad: " << gyroRad << endl;
+//    cout << "robotdata.GyroAngle: " << robotdata.GyroAngle/100 << endl;
 
+//    cout << "Priebezna pozicia x: " << x << " y: " << y << endl;
+
+    alfa = gyroRad;
     encLeftWheel = robotdata.EncoderLeft;
     encRightWheel = robotdata.EncoderRight;
 
@@ -1004,7 +1130,7 @@ void MainWindow::initData(TKobukiData robotdata){
     d = 0.23; //m
     alfa = 0;
 
-    speed = 0;
+    forwardSpeed = 0;
 
     //stvorec
 //    xArray[0] = 0;
@@ -1062,10 +1188,10 @@ void MainWindow::initData(TKobukiData robotdata){
 
 //    x_final = 350;
 //    y_final = 0;
-//    x_final = 420;
-//    y_final = 180;
-    x_final = 200;
-    y_final = 295;
+    x_final = 420;
+    y_final = 180;
+//    x_final = 200;
+//    y_final = 295;
 
 //    x_final = 280;
 //    y_final = 200;
@@ -1110,7 +1236,7 @@ void MainWindow::initData(TKobukiData robotdata){
 
     angle_lidar = 0;
     min_dist_lidar = 300;
-
+    isMovementBasedOnLidar = false;
 
     init = false;
 }
@@ -1132,7 +1258,7 @@ int MainWindow::processThisLidar(LaserMeasurement laserData)
 void MainWindow::on_pushButton_9_clicked() //start button
 {
 
-    forwardspeed=0;
+    forwardSpeed=0;
     rotationspeed=0;
     //tu sa nastartuju vlakna ktore citaju data z lidaru a robota
     connect(this,SIGNAL(uiValuesChanged(double,double,double)),this,SLOT(setUiValues(double,double,double)));
@@ -1200,6 +1326,8 @@ void MainWindow::on_pushButton_10_clicked()//start automatic
         Point center = findLastValidPoint(map, {0,0}, {(int)x_final,(int)y_final});
         x_destination = center.x;
         y_destination = center.y;
+
+        cout << "Sledovanie ciary Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
 
         //priamka medzi bodmi
         slope = (y_destination - 0) / (x_destination - 0);
@@ -1271,10 +1399,14 @@ void MainWindow::on_pushButton_12_clicked() //SEND ROBOT
 
 void MainWindow::on_pushButton_4_clicked() //stop
 {
+    forwardSpeed = 0;
+    rotationspeed = 0;
     robot.setTranslationSpeed(0);
     isStop = true;
     isRobotRotate = false;
     starMovement = false;
+
+    cout << "Odmerana vzdialenost  dist lidar_315_270: " << lidar_315_270 << " dist lidar_360_315: " << lidar_360_315 << endl;
 }
 
 

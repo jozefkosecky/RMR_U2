@@ -110,6 +110,8 @@ private slots:
     Point walkAlongWall(int map[240][240], Point point, int yDirection, int xDirection, int yControl, int xControl, int x_substraction, int y_substraction);
     bool isOnLine();
 
+    void walkAlongWallLidar();
+
 private:
 
     //--skuste tu nic nevymazat... pridavajte co chcete, ale pri odoberani by sa mohol stat nejaky drobny problem, co bude vyhadzovat chyby
@@ -124,8 +126,7 @@ private:
      QTimer *timer;
 
 
-
-     double forwardspeed;//mm/s
+     double forwardSpeed;
      double rotationspeed;//omega/s
 
      double distanceLW;
@@ -141,7 +142,7 @@ private:
      double d;
      double alfa;
      double tickToMeter;
-     int speed;
+
      bool init;
      bool isCorrectRotation;
      bool isStop;
@@ -180,6 +181,11 @@ private:
     double lidar_90;
     double lidar_270;
     double lidar_315;
+    double lidar_315_270;
+    double lidar_360_315;
+    double lidar_225_270;
+    double lidar_0_45;
+    double lidar_45_90;
     double angle_lidar;
     double min_dist_lidar;
 
@@ -187,7 +193,7 @@ private:
 
     double slope;
     double y_intercept;
-    Direction lastDirection;
+    Direction lastDirection = Direction::UP;
 
     bool isWallClose;
     bool isMovementBasedOnLidar;
@@ -198,6 +204,13 @@ private:
     bool isFreeMovement;
 
     bool isObstacleInPath;
+
+    Point tempPoint;
+    double distanceForward;
+    double rotationToRight;
+    double rotationToLeft;
+    double rotationGyroTempRight;
+    double rotationGyroTempLeft;
 
 
 public slots:
