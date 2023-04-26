@@ -103,7 +103,6 @@ void MainWindow::updateMap(){
     double minDist = 300;
     double angle = 0;
 
-//    copyOfLaserData.numberOfScans
     for(int k=0;k<copyOfLaserData.numberOfScans/*360*/;k++)
     {
        /* if(copyOfLaserData.Data[k].scanQuality != 0){
@@ -111,7 +110,10 @@ void MainWindow::updateMap(){
         }*/
 
         dist=copyOfLaserData.Data[k].scanDistance/10;
-        angle = copyOfLaserData.Data[k].scanAngle;
+        angle = 360-copyOfLaserData.Data[k].scanAngle;
+
+//        cout << "k: " << k << " angle: " << angle <<  endl;
+
         if(dist <= 15 || dist > 300 || (dist >= 64 && dist <= 70)){
             continue;
         }
@@ -139,15 +141,13 @@ void MainWindow::updateMap(){
 //            starMovement = true;
 //        }
 
-
-        switch(k) {
-            case 203:
-                lidar_270 = dist;
-                cout << "LIDAR_270: " << lidar_270 << endl;
-                break;
-            default:
-                break;
+        if(angle - 270 > 0 && angle - 270 <= 4){
+            lidar_270 = dist;
         }
+
+//        if(isMovementBasedOnLidar == false && min_dist_lidar < 30){
+//            isMovementBasedOnLidar = true;
+//        }
 
         angleRad = (((360-copyOfLaserData.Data[k].scanAngle)*PI)/180.0);
 
@@ -167,7 +167,6 @@ void MainWindow::updateMap(){
 
     }
 }
-
 
 /// toto je slot. niekde v kode existuje signal, ktory je prepojeny. pouziva sa napriklad (v tomto pripade) ak chcete dostat data z jedneho vlakna (robot) do ineho (ui)
 /// prepojenie signal slot je vo funkcii  on_pushButton_9_clicked
@@ -383,26 +382,8 @@ void MainWindow::robotMovement(TKobukiData robotdata){
                             starMovement = false;
                         }
 
-//                        //ak je; vzdialenost steny od robota v rozmedzi 0-90 mensia ako 40 tak ho posuniem v x osi dozadu
-//                        if(min_dist_lidar < 40) {
-//                            x_destination -= 15;
-//                            distance = getDistanceToEnd();
-//                            min_dist_lidar = 300;
-//                            cout << "mindist Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
-//                        }
-//                        else{
-//                            Point point = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
-//                            x_destination = point.x;
-//                            y_destination = point.y;
-//                            cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
-//                            cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
-//                            distance = getDistanceToEnd();
-//                        }
-
-                        Point point = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
-                        Point center = findLastValidPoint(map, {(int)x,(int)y}, {point.x,point.y});
-//                        x_destination = point.x;
-//                        y_destination = point.y;
+                        Point center = pointOfChange(map,Point{static_cast<int>(std::round(x)),static_cast<int>(std::round(y))});
+//                        Point center = findLastValidPoint(map, {(int)x,(int)y}, {point.x,point.y});
                         x_destination = center.x;
                         y_destination = center.y;
                         cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
@@ -528,8 +509,8 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
     pointEnd.x = pointEnd.x/grid_size + grid_offset;
     pointEnd.y = pointEnd.y/grid_size + grid_offset;
 
-    cout << "pointStart x: " << pointStart.x << " y: " << pointStart.y << endl;
-    cout << "pointEnd x: " << pointEnd.x << " y: " << pointEnd.y << endl;
+//    cout << "pointStart x: " << pointStart.x << " y: " << pointStart.y << endl;
+//    cout << "pointEnd x: " << pointEnd.x << " y: " << pointEnd.y << endl;
 
     // Use Bresenham's line algorithm to iterate through cells along the line
     int dx = abs(pointEnd.x - pointStart.x);
@@ -569,7 +550,7 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
                 // Check if the current element has the value 1
                 if (map[y_test][x_test] != 0) {
                     // Found a 1 in the 2 cm radius
-                    cout << "Nasiel som prekazku a 1 at x: " << x << ", y: " << y << endl;
+//                    cout << "Nasiel som prekazku a 1 at x: " << x << ", y: " << y << endl;
                     isObstacle = true;
                     break;
                 }
@@ -581,7 +562,7 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
 
         if(isObstacle && pointEnd.x != ((int)x_final/grid_size + grid_offset) && pointEnd.y != ((int)y_final/grid_size + grid_offset)){
             isObstacleInPath = true;
-            cout << "Nasiel som prekazku a 1 at pointEnd.x: " << pointEnd.x << ", x: " << (int)x_final << " pointEnd.y: " << pointEnd.y << ", y: " << (int)y_final << endl;
+//            cout << "Nasiel som prekazku a 1 at pointEnd.x: " << pointEnd.x << ", x: " << (int)x_final << " pointEnd.y: " << pointEnd.y << ", y: " << (int)y_final << endl;
             double angle = atan2(pointEnd.y - pointStart.y, pointEnd.x - pointStart.x);
             x_test = (x_test - cos(angle) * wall_distance) * grid_size - grid_offset * grid_size;
             y_test = (y_test - sin(angle) * wall_distance) * grid_size - grid_offset * grid_size;
@@ -611,7 +592,7 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
            x = (finalPoint.x - grid_offset) * grid_size;
            y = (finalPoint.y - grid_offset) * grid_size;
 
-           cout << "pointEnd" << endl;
+//           cout << "pointEnd" << endl;
            return Point{x, y};
        }
 
@@ -621,12 +602,12 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
             err -= dy;
             x += sx;
 
-            cout << "new x: " << x << endl;
+//            cout << "new x: " << x << endl;
         }
         if (e2 < dx) {
             err += dx;
             y += sy;
-            cout << "new y: " << y << endl;
+//            cout << "new y: " << y << endl;
         }
     }
 }
@@ -1079,12 +1060,12 @@ void MainWindow::initData(TKobukiData robotdata){
     x_destination = 0;
     y_destination = 0;
 
-    x_final = 350;
-    y_final = 0;
+//    x_final = 350;
+//    y_final = 0;
 //    x_final = 420;
 //    y_final = 180;
-//    x_final = 200;
-//    y_final = 295;
+    x_final = 200;
+    y_final = 295;
 
 //    x_final = 280;
 //    y_final = 200;
