@@ -212,6 +212,10 @@ private:
     double rotationGyroTempRight;
     double rotationGyroTempLeft;
 
+    int validMapPoint;
+
+    bool tightSpace;
+
 
 public slots:
      void setUiValues(double robotX,double robotY,double robotFi);
