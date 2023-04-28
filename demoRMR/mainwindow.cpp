@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     controllerMove(7.5, 0.01, 500)
 {
     //tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-    ipaddress="192.168.1.14"; //192.168.1.11 127.0.0.1
+    ipaddress="192.168.1.12"; //192.168.1.11 127.0.0.1
 //    ipaddress="127.0.0.1";
   //  cap.open("http://192.168.1.11:8000/stream.mjpg");
     ui->setupUi(this);
@@ -199,6 +199,7 @@ void MainWindow::updateMap(){
 
 
 
+
         if(rotationspeed == 0){
             angleRad = (((360-copyOfLaserData.Data[k].scanAngle)*PI)/180.0);
 
@@ -217,13 +218,18 @@ void MainWindow::updateMap(){
 
 
     }
+
+
+//    if(tightSpace == false && (lidar_0_45 < 45 || lidar_45_90 < 45) && (lidar_360_315 < 45 || lidar_315_270 < 45)){
+//        isMovementBasedOnLidar = true;
+//    }
 }
 
 void MainWindow::walkAlongWallLidar(){
 //    calculateXY(robotdata);
 //    cout << "walkAlongWallLidar--------------" << endl;
 
-    if((lidar_0_45 < 40 || lidar_45_90 < 40) && (lidar_360_315 < 40 || lidar_315_270 < 40)){
+    if((lidar_0_45 < 50 || lidar_45_90 < 50) && (lidar_360_315 < 50 || lidar_315_270 < 50)){
         tightSpace = true;
     }
 
@@ -701,7 +707,7 @@ Point MainWindow::findLastValidPoint(int map[240][240], Point pointStart, Point 
                     break;
                 }
                 // Check if the current element has the value 1
-                if (map[y_test][x_test] > validMapPoint + 2) {
+                if (map[y_test][x_test] > validMapPoint + 3) {
                     // Found a 1 in the 2 cm radius
 //                    cout << "Nasiel som prekazku a 1 at x: " << x << ", y: " << y << endl;
                     isObstacle = true;
@@ -963,7 +969,7 @@ Point MainWindow::pointOfChange(int map[240][240], Point point) {
                 }
                 cout << "sy: " << sy <<endl;
                 break;
-            }     
+            }
         }
         if(isBreak == true){
             newPoint.x = (newPoint.x - grid_offset) * grid_size;
