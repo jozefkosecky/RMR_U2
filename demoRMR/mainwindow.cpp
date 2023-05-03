@@ -20,7 +20,7 @@ MainWindow::MainWindow(QWidget *parent) :
     controllerMove(7.5, 0.01, 500)
 {
     //tu je napevno nastavena ip. treba zmenit na to co ste si zadali do text boxu alebo nejaku inu pevnu. co bude spravna
-    ipaddress="192.168.1.12"; //192.168.1.11 127.0.0.1
+    ipaddress="192.168.1.11"; //192.168.1.11 127.0.0.1
 //    ipaddress="127.0.0.1";
   //  cap.open("http://192.168.1.11:8000/stream.mjpg");
     ui->setupUi(this);
@@ -220,9 +220,10 @@ void MainWindow::updateMap(){
     }
 
 
-//    if(tightSpace == false && (lidar_0_45 < 45 || lidar_45_90 < 45) && (lidar_360_315 < 45 || lidar_315_270 < 45)){
-//        isMovementBasedOnLidar = true;
-//    }
+    if(tightSpace == false && (lidar_0_45 < 45 || lidar_45_90 < 45) && (lidar_360_315 < 45 || lidar_315_270 < 45)){
+        isMovementBasedOnLidar = true;
+        tightSpace = true;
+    }
 }
 
 void MainWindow::walkAlongWallLidar(){
@@ -233,11 +234,12 @@ void MainWindow::walkAlongWallLidar(){
         tightSpace = true;
     }
 
-    if(lidar_0 < 50){
+    if(lidar_0 < 50 || isFrontClose){
         cout << "stavsledovania 1" << endl;
         forwardSpeed = 0;
         rotationspeed = 0.5;
         robot.setRotationSpeed(rotationspeed);
+        isFrontClose = true;
     }
     else if(tightSpace){
         cout << "stavsledovania 2" << endl;
@@ -293,6 +295,9 @@ void MainWindow::walkAlongWallLidar(){
         robot.setTranslationSpeed(forwardSpeed);
     }
 
+    if(lidar_0 > 50 && lidar_360_315 > 50){
+        isFrontClose = false;
+    }
     if((lidar_360_315 > 25 || lidar_315_270 > 25) && tightSpace){
         tightSpace = false;
     }
@@ -353,7 +358,7 @@ int MainWindow::processThisRobot(TKobukiData robotdata)
             cout << "Predchadzajuca pozicia x: " << x << " y: " << y << endl;
             cout << "Nova pozicia na ktoru idem je x: " << x_destination << " y: " << y_destination << endl;
             distance = getDistanceToEnd();
-            if(distance > 60 && lidar_0 > 60 && lidar_360_315 > 45 && lidar_315_270 > 30){
+            if(distance > 60 && lidar_0 > 60 && lidar_360_315 > 45 && lidar_315_270 > 30 && tightSpace == false){
                 isMovementBasedOnLidar = false;
             }
         }
@@ -1274,6 +1279,7 @@ void MainWindow::initData(TKobukiData robotdata){
     tightSpace = false;
     validMapPoint = 0;
     init = false;
+    isFrontClose = false;
 }
 
 ///toto je calback na data z lidaru, ktory ste podhodili robotu vo funkcii on_pushButton_9_clicked

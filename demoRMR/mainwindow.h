@@ -215,6 +215,7 @@ private:
     int validMapPoint;
 
     bool tightSpace;
+    bool isFrontClose;
 
 
 public slots:
